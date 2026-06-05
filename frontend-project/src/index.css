@@ -32,4 +32,4 @@ body {
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #99f6e4; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #2dd4bf; }
+::-webkit-scrollbar-thumb:hover { background: hsl(287, 89%, 18%); }
