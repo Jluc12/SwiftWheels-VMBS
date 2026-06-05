@@ -14,7 +14,8 @@ export const login = async (req, res, next) => {
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ success: false, message: 'Invalid username or password' });
     }
-    req.session.user = { id: user.id, username: user.username, role: user.role };
+    const [[customer]] = await pool.query('SELECT id FROM customers WHERE user_id = ?', [user.id]);
+    req.session.user = { id: user.id, username: user.username, role: user.role, customer_id: customer?.id || null };
     return res.json({ success: true, data: req.session.user, message: 'Login successful' });
   } catch (error) {
     return next(error);
@@ -34,7 +35,7 @@ export const getMe = (req, res) => {
 
 export const register = async (req, res, next) => {
   try {
-    const { username, password, role = 'user' } = req.body;
+    const { username, password, role = 'user', customer_name, phone_number } = req.body;
     if (!username || username.trim().length < 3) {
       return res.status(400).json({ success: false, message: 'Username must be at least 3 characters' });
     }
@@ -56,10 +57,22 @@ export const register = async (req, res, next) => {
     }
     const hash = await bcrypt.hash(password, 12);
     const [result] = await pool.query('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [username.trim(), hash, role]);
-    req.session.user = { id: result.insertId, username: username.trim(), role };
+
+    let customerId = null;
+    if (role === 'user') {
+      const name = customer_name || username.trim();
+      const phone = phone_number || '';
+      const [custResult] = await pool.query(
+        'INSERT INTO customers (customer_name, phone_number, address, user_id) VALUES (?, ?, ?, ?)',
+        [name, phone, '', result.insertId]
+      );
+      customerId = custResult.insertId;
+    }
+
+    req.session.user = { id: result.insertId, username: username.trim(), role, customer_id: customerId };
     return res.status(201).json({
       success: true,
-      data: { id: result.insertId, username: username.trim(), role },
+      data: { id: result.insertId, username: username.trim(), role, customer_id: customerId },
       message: 'Account created successfully'
     });
   } catch (error) {

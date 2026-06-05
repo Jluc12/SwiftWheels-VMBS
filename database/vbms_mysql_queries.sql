@@ -17,9 +17,11 @@ CREATE TABLE IF NOT EXISTS customers (
   id INT AUTO_INCREMENT PRIMARY KEY,
   customer_name VARCHAR(100) NOT NULL,
   phone_number VARCHAR(20) NOT NULL UNIQUE,
-  address VARCHAR(255) NOT NULL,
+  address VARCHAR(255) NOT NULL DEFAULT '',
+  user_id INT UNIQUE,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_customers_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS bookings (
@@ -30,11 +32,12 @@ CREATE TABLE IF NOT EXISTS bookings (
   booking_duration INT NOT NULL,
   booking_cost DECIMAL(10,2) NOT NULL,
   status ENUM('pending','confirmed','completed','cancelled') NOT NULL DEFAULT 'pending',
+  approved_by INT,
+  approved_at DATETIME,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  CONSTRAINT fk_bookings_customer
-    FOREIGN KEY (customer_id) REFERENCES customers(id)
-    ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT fk_bookings_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_bookings_approver FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS payments (
@@ -45,15 +48,15 @@ CREATE TABLE IF NOT EXISTS payments (
   payment_date DATE NOT NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  CONSTRAINT fk_payments_booking
-    FOREIGN KEY (booking_id) REFERENCES bookings(id)
-    ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT fk_payments_booking FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+-- Default users (pre-hashed)
 INSERT IGNORE INTO users (username, password, role) VALUES
 ('admin', '$2b$12$nTJgzlEUxlmdYa3H0qQ7SOsDRLxMfq98Whu4zVKqw4MBG5C9dLjPO', 'admin'),
 ('jluc', '$2b$12$oMO/iPAfOwVKNYax7/vsguLX.a8A9g45HAEAyuuXOIiUYXLpKQQsm', 'user');
 
+-- Demo customers
 INSERT IGNORE INTO customers (id, customer_name, phone_number, address) VALUES
 (1, 'Jean Uwimana', '0782345678', 'Huye, Ngoma'),
 (2, 'Aline Mukamana', '0791122334', 'Huye, Tumba'),
@@ -61,6 +64,7 @@ INSERT IGNORE INTO customers (id, customer_name, phone_number, address) VALUES
 (4, 'Claudine Nyiransabimana', '0739876543', 'Nyanza, Busasamana'),
 (5, 'Eric Ndayisaba', '0787654321', 'Muhanga, Nyamabuye');
 
+-- Demo bookings
 INSERT IGNORE INTO bookings (id, customer_id, vehicle_name, booking_date, booking_duration, booking_cost, status) VALUES
 (1, 1, 'Toyota Hiace', '2026-06-01', 2, 120000.00, 'confirmed'),
 (2, 2, 'Coaster Bus', '2026-06-01', 1, 95000.00, 'completed'),
@@ -68,6 +72,7 @@ INSERT IGNORE INTO bookings (id, customer_id, vehicle_name, booking_date, bookin
 (4, 4, 'Hyundai H1', '2026-06-03', 2, 140000.00, 'pending'),
 (5, 5, 'Toyota Land Cruiser', '2026-06-04', 4, 320000.00, 'confirmed');
 
+-- Demo payments
 INSERT IGNORE INTO payments (id, booking_id, payment_amount, payment_status, payment_date) VALUES
 (1, 1, 120000.00, 'paid', '2026-06-01'),
 (2, 2, 95000.00, 'paid', '2026-06-01'),

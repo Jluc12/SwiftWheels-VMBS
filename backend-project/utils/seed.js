@@ -45,6 +45,15 @@ const main = async () => {
   await pool.query('INSERT IGNORE INTO users (username, password, role) VALUES (?, ?, ?)', ['admin', adminHash, 'admin']);
   await pool.query('INSERT IGNORE INTO users (username, password, role) VALUES (?, ?, ?)', ['jluc', userHash, 'user']);
 
+  // Link jluc to first demo customer
+  const [[jlucUser]] = await pool.query("SELECT id FROM users WHERE username = 'jluc'");
+  if (jlucUser) {
+    await pool.query(
+      "UPDATE customers SET user_id = ? WHERE customer_name = 'Jean Uwimana' AND user_id IS NULL",
+      [jlucUser.id]
+    );
+  }
+
   for (const customer of customers) {
     await pool.query(
       'INSERT IGNORE INTO customers (customer_name, phone_number, address) VALUES (?, ?, ?)',
@@ -52,14 +61,16 @@ const main = async () => {
     );
   }
 
+  const [[adminUser]] = await pool.query("SELECT id FROM users WHERE username = 'admin'");
   const [customerRows] = await pool.query('SELECT id FROM customers ORDER BY id LIMIT 15');
   for (let i = 0; i < customerRows.length; i += 1) {
     const duration = (i % 5) + 1;
     const cost = duration * (45000 + (i % 4) * 10000);
     const day = String((i % 25) + 1).padStart(2, '0');
+    const status = i % 3 === 0 ? 'completed' : (i % 3 === 1 ? 'confirmed' : 'pending');
     await pool.query(
-      'INSERT INTO bookings (customer_id, vehicle_name, booking_date, booking_duration, booking_cost, status) VALUES (?, ?, ?, ?, ?, ?)',
-      [customerRows[i].id, vehicles[i], `2026-06-${day}`, duration, cost, i % 3 === 0 ? 'completed' : 'confirmed']
+      'INSERT INTO bookings (customer_id, vehicle_name, booking_date, booking_duration, booking_cost, status, approved_by, approved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [customerRows[i].id, vehicles[i], `2026-06-${day}`, duration, cost, status, status !== 'pending' && adminUser ? adminUser.id : null, status !== 'pending' ? '2026-06-01 10:00:00' : null]
     );
   }
 
