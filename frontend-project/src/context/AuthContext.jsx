@@ -26,7 +26,12 @@ export const AuthProvider = ({ children }) => {
   const login = async (payload) => {
     const { data } = await authAPI.login(payload);
     setUser(data.data);
-    toast.success('Welcome to SwiftWheels VBMS');
+    return data.data;
+  };
+
+  const register = async (payload) => {
+    const { data } = await authAPI.register(payload);
+    setUser(data.data);
     return data.data;
   };
 
@@ -36,7 +41,7 @@ export const AuthProvider = ({ children }) => {
     toast.success('Logged out successfully');
   };
 
-  const value = useMemo(() => ({ user, loading, login, logout, refreshUser }), [user, loading]);
+  const value = useMemo(() => ({ user, loading, login, register, logout, refreshUser }), [user, loading]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 

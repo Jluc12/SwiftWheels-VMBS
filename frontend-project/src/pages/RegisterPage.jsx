@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Car, Eye, EyeOff, Lock, ShieldCheck, User, UserRound } from 'lucide-react';
-import { authAPI } from '../services/authAPI.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { AppFooter } from '../components/Layout.jsx';
 import { cardClass, inputClass, primaryButton, secondaryButton } from '../components/UI.jsx';
@@ -11,7 +10,7 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ username: '', password: '', role: 'user' });
   const [submitting, setSubmitting] = useState(false);
-  const { login } = useAuth();
+  const { register } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (field) => (event) => setForm({ ...form, [field]: event.target.value });
@@ -26,9 +25,8 @@ const RegisterPage = () => {
     }
     setSubmitting(true);
     try {
-      const { data } = await authAPI.register({ username: form.username.trim(), password: form.password, role: form.role });
-      login(data);
-      toast.success(data.message || 'Account created successfully');
+      await register({ username: form.username.trim(), password: form.password, role: form.role });
+      toast.success('Account created successfully');
       navigate('/app/dashboard');
     } catch (error) {
       const message = error.response?.data?.message || 'Registration failed';
