@@ -195,7 +195,7 @@ const BookingsPage = () => {
           </label>
           <label className="grid gap-1 text-sm font-medium">
             Booking Date
-            <input type="date" className={inputClass} value={form.booking_date} onChange={(event) => setForm({ ...form, booking_date: event.target.value })} />
+            <input type="date" className={inputClass} value={form.booking_date} onChange={(event) => setForm({ ...form, booking_date: event.target.value })} min={new Date().toISOString().slice(0, 10)} />
             {errors.booking_date && <p className="text-xs text-rose-500">{errors.booking_date}</p>}
           </label>
           <label className="grid gap-1 text-sm font-medium">

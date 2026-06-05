@@ -1,9 +1,12 @@
 import pool from '../config/db.js';
 
+const today = () => new Date().toISOString().slice(0, 10);
+
 const validateBooking = ({ vehicle_name, booking_date, booking_duration, booking_cost }) => {
   const errors = {};
   if (!vehicle_name || vehicle_name.trim().length < 3) errors.vehicle_name = 'Vehicle name is required';
   if (!booking_date) errors.booking_date = 'Booking date is required';
+  else if (booking_date < today()) errors.booking_date = 'Booking date cannot be in the past';
   if (!Number.isInteger(Number(booking_duration)) || Number(booking_duration) <= 0) errors.booking_duration = 'Duration must be a positive whole number';
   if (Number(booking_cost) < 0 || booking_cost === '') errors.booking_cost = 'Booking cost must be zero or greater';
   return errors;
